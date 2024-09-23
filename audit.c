@@ -62,6 +62,7 @@ unsigned int la_objopen(struct link_map *map, Lmid_t lmid,
 			uintptr_t *cookie) {
 	fprintd(stderr, "objopen %s\n", map->l_name);
 	if(*map->l_name == '\0') {
+		// l_name is the empty string if this is the main executable
 		*cookie = EXECUTABLE_COOKIE;
 		fprintd(stderr, "base executable\n");
 		return LA_FLG_BINDFROM;
@@ -76,6 +77,15 @@ unsigned int la_objopen(struct link_map *map, Lmid_t lmid,
 	return 0;
 }
 
+/*
+ * this function:
+ * 1. stores a copy of the original SDL_PollEvent
+ * 2. redirects the main executable's calls from (the real) SDL_PollEvent to convert_sdl_event_to2
+ * 3. allows all calls outside of the main executable to go to the real SDL_PollEvent
+ * intended to be error-hardy for use in e.g. other games
+ * and doesn't break stuff that doesn't use SDL
+ * maybe not thread-safe? Eh.
+ */
 uintptr_t la_symbind32(Elf32_Sym *sym, unsigned int ndx,
                        uintptr_t *refcook, uintptr_t *defcook,
                        unsigned int *flags, const char *symname) {
@@ -100,12 +110,15 @@ uintptr_t la_symbind32(Elf32_Sym *sym, unsigned int ndx,
 		fprintd(stderr, "is pollevent\n");
 
 		if(!(*flags & LA_SYMB_ALTVALUE)) {
+			// this is the original SDL_PollEvent, store a copy
 			real_SDL_PollEvent = (SDL_PollEvent_t *)sym->st_value;
 		}
 
 		if(return_real) {
+			// return the real function for use inside sdl2 or our library
 			retval = (uintptr_t)real_SDL_PollEvent;
 		} else {
+			// otherwise shim it for the game
 			retval = (uintptr_t)convert_sdl_event_to2;
 		}
 	}

@@ -1,8 +1,9 @@
 SDL ABI compat shim for Don't Starve
 ---
 
-This wrapper uses `LD_AUDIT` and mainly targets the game Don't Starve. Don't
-Starve uses a pre-2.0.0 release of SDL2 (somewhere from [[`4149992`](https://github.com/libsdl-org/SDL-historical-archive/commit/4149992ac26e739dd843f78a5a7bbe2dc5bcca71),
+This wrapper uses the `LD_AUDIT` interface to allow the game Don't Starve to
+run with modern versions of SDL2. Don't Starve ships with a pre-2.0.0 release
+of SDL2 (somewhere from [[`4149992`](https://github.com/libsdl-org/SDL-historical-archive/commit/4149992ac26e739dd843f78a5a7bbe2dc5bcca71),
 [`d151ba0`](https://github.com/libsdl-org/SDL-historical-archive/commit/d151ba09266de92d2a4f631c86441d637f853e9e))).
 It was built for the 32-bit x86 architecture on Linux.
 
@@ -23,11 +24,11 @@ Now you can add other arguments, e.g. `SDL_VIDEODRIVER=wayland` or
 `SDL_AUDIODRIVER=pipewire`.
 
 There are several issues mainly relating to event struct layout changes before
-2.0.0's release. I had [a different repo](https://github.com/JL2210/dont-starve-sdl2)
+2.0.0's release. I have [a different repo](https://github.com/JL2210/dont-starve-sdl2)
 where I found out what changes were causing these problems. In that repo I made
 a temporary fix to SDL2 that restored the old struct layouts.
 
-However, this wasn't a perfect solution; it required rebuilding SDL every time
+However, that wasn't a perfect solution; it required rebuilding SDL every time
 that it was updated and needed a separate copy of the library solely for Don't
 Starve. Past that, it would also have issues once sdl3 became the standard and
 would need to be rewritten to work with sdl2-compat.
