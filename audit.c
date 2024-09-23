@@ -40,6 +40,7 @@ unsigned int la_version(unsigned int version) {
 void la_preinit(uintptr_t *cookie) {
 	assert(*cookie == EXECUTABLE_COOKIE);
 	fprintd(stderr, "la_preinit\n");
+	(void)cookie;
 }
 
 char *la_objsearch(const char *name, uintptr_t *cookie,

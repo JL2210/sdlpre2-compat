@@ -11,7 +11,7 @@
 
 typedef int SDL_PollEvent_t(SDL_Event *);
 
-extern SDL_PollEvent_t *real_SDL_PollEvent
+extern SDL_PollEvent_t *real_SDL_PollEvent;
 extern SDL_PollEvent_t convert_sdl_event_to2;
 
 #if 0
