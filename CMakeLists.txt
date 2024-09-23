@@ -18,10 +18,10 @@ add_link_options(-m32)
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-add_library(audit MODULE)
-set_target_properties(audit PROPERTIES PREFIX "")
-target_sources(audit PRIVATE
+add_library(ds_sdl2_shim MODULE)
+set_target_properties(ds_sdl2_shim PROPERTIES PREFIX "")
+target_sources(ds_sdl2_shim PRIVATE
 	audit.c
 	event-converter.c
 )
-target_compile_definitions(audit PRIVATE _GNU_SOURCE)
+target_compile_definitions(ds_sdl2_shim PRIVATE _GNU_SOURCE)

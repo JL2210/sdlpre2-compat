@@ -1,11 +1,11 @@
-SDL ABI compat shim for Don't Starve
+SDL ABI compat shim for Don't Starve/Together
 ---
 
-This wrapper uses the `LD_AUDIT` interface to allow the game Don't Starve to
-run with modern versions of SDL2. Don't Starve ships with a pre-2.0.0 release
-of SDL2 (somewhere from [[`4149992`](https://github.com/libsdl-org/SDL-historical-archive/commit/4149992ac26e739dd843f78a5a7bbe2dc5bcca71),
+This wrapper uses the `LD_AUDIT` interface to allow the games Don't Starve and
+Don't Starve Together to run with modern versions of SDL2. They both ship with
+a pre-2.0.0 release of SDL2 (somewhere in [[`4149992`](https://github.com/libsdl-org/SDL-historical-archive/commit/4149992ac26e739dd843f78a5a7bbe2dc5bcca71),
 [`d151ba0`](https://github.com/libsdl-org/SDL-historical-archive/commit/d151ba09266de92d2a4f631c86441d637f853e9e))).
-It was built for the 32-bit x86 architecture on Linux.
+They are built for the 32-bit x86 architecture on Linux.
 
 To build (release build heavily recommended for playable experience):
 
@@ -17,7 +17,7 @@ cmake --build build
 To use, put this in your Steam launch arguments:
 
 ```
-LD_AUDIT=/path/to/sdlpre2-compat/build/audit.so %command%
+LD_AUDIT=/path/to/sdlpre2-compat/build/ds_sdl2_shim.so %command%
 ```
 
 Now you can add other arguments, e.g. `SDL_VIDEODRIVER=wayland` or
