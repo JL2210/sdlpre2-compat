@@ -1,64 +1,77 @@
+/*
+ * Copyright (c) 2024 James R Larrowe
+ * SPDX-License-Identifier: Zlib
+ */
+
 #include <SDL_events.h>
 #include "oldevents.h"
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 
 // NOTE: use memmove instead of memcpy!
 
-// requires event to be set up
-#define remove_member(type, remove) \
-	SDL_##type *_event = (SDL_##type *)event; \
-	memmove(&_event->remove, &_event->remove+1, sizeof(SDL_Event)-offsetof(SDL_##type, remove)-sizeof(_event->remove))
+#define remove_member(remove, event, _event) \
+	_Static_assert(__builtin_types_compatible_p(typeof(event), SDL_Event *), "event must be of type SDL_Event*"); \
+	assert(event == (SDL_Event *)_event && "event and _event must be equal"); \
+	memmove(&_event->remove, &_event->remove+1, (char *)(event+1)-(char *)(&_event->remove+1))
 
-// requires event and _event to be set up
-#define change_type_before(type, nextmember) \
-	SDL_Old##type *_oldevent = (SDL_Old##type *)event; \
-	memmove(&_oldevent->nextmember, &_event->nextmember, sizeof(SDL_Event)-offsetof(SDL_##type, nextmember))
+// automatically set up _event
+#define simple_remove_member(type, remove, event) \
+	SDL_##type##Event *_event = (typeof(_event))event; \
+	remove_member(remove, event, _event)
 
-// sets up _event for you
-#define s_change_type_before(type, nextmember) \
-	SDL_##type *_event = (SDL_##type *)event; \
-	change_type_before(type, nextmember)
+// assumes little-endian (this is x86 anyway so point is moot)
+#define truncate_member(type, member, event, _event) \
+	_Static_assert(__builtin_types_compatible_p(typeof(event), SDL_Event *), "event must be of type SDL_Event*"); \
+	assert(event == (SDL_Event *)_event && "event and _event must be equal"); \
+	SDL_Old##type##Event *_oldevent = (typeof(_oldevent))event; \
+	_oldevent->member = (typeof(_oldevent->member))_event->member; \
+	memmove(&_oldevent->member+1, &_event->member+1, (char *)(event+1)-(char *)(&_event->member+1))
 
-
+// automatically set up _event
+#define simple_truncate_member(type, member, event) \
+	SDL_##type##Event *_event = (typeof(_event))event; \
+	truncate_member(type, member, event, _event)
 
 // modifies the event in-place
-void convert_sdl_event_to2(SDL_Event *event) {
+int convert_sdl_event_to2(SDL_Event *event) {
+	int retval = real_SDL_PollEvent(event);
 	switch(event->type) {
 		case SDL_MOUSEMOTION: {
-			remove_member(MouseMotionEvent, which);
+			simple_remove_member(MouseMotion, which, event);
 		}
 		break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP: {
-			remove_member(MouseButtonEvent, which);
+			simple_remove_member(MouseButton, which, event);
 		}
 		break;
 		case SDL_MOUSEWHEEL: {
-			remove_member(MouseWheelEvent, which);
+			simple_remove_member(MouseWheel, which, event);
 		}
 		break;
 		case SDL_JOYAXISMOTION: {
 			SDL_JoyAxisEvent *_event = (SDL_JoyAxisEvent *)event;
 			int value = _event->value;
-			change_type_before(JoyAxisEvent, axis);
+			truncate_member(JoyAxis, which, event, _event);
 			_oldevent->value = value;
 		}
 		break;
 		case SDL_JOYBALLMOTION: {
 			SDL_JoyBallEvent *_event = (SDL_JoyBallEvent *)event;
 			int xrel = _event->xrel, yrel = _event->yrel;
-			change_type_before(JoyBallEvent, ball);
+			truncate_member(JoyBall, which, event, _event);
 			_oldevent->xrel = xrel; _oldevent->yrel = yrel;
 		}
 		break;
 		case SDL_JOYHATMOTION: {
-			s_change_type_before(JoyHatEvent, hat);
+			simple_truncate_member(JoyHat, which, event);
 		}
 		break;
 		case SDL_JOYBUTTONDOWN:
 		case SDL_JOYBUTTONUP: {
-			s_change_type_before(JoyButtonEvent, button);
+			simple_truncate_member(JoyButton, which, event);
 		}
 		break;
 		case SDL_CONTROLLERAXISMOTION: {
@@ -66,7 +79,7 @@ void convert_sdl_event_to2(SDL_Event *event) {
 			SDL_OldControllerAxisEvent oldevent = {
 				.type		=	_event->type,
 				.timestamp	=	_event->timestamp,
-				.which		=	_event->which,
+				.which		=	(Uint8)_event->which,
 				.axis		=	(SDL_CONTROLLER_AXIS)_event->axis,
 				.value		=	_event->value,
 			};
@@ -79,7 +92,7 @@ void convert_sdl_event_to2(SDL_Event *event) {
 			SDL_OldControllerButtonEvent oldevent = {
 				.type           =       _event->type,
 				.timestamp      =       _event->timestamp,
-				.which		=	_event->which,
+				.which		=	(Uint8)_event->which,
 				.button		=	(SDL_CONTROLLER_BUTTON)_event->button,
 				.state		=	_event->state,
 			};
@@ -94,4 +107,5 @@ void convert_sdl_event_to2(SDL_Event *event) {
 		default: /* no changes, do nothing */
 		break;
 	}
+	return retval;
 }

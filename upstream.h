@@ -1,7 +1,28 @@
+/*
+  Simple DirectMedia Layer
+  Copyright 1997-2013, Sam Lantinga <slouken@libsdl.org> and the SDL contributors
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
 #ifndef OLDEVENTS_H
 #error This file should only be included from oldevents.h
 #endif
 
+#if 0 // unused
 typedef struct SDL_MouseMotionEvent
 {
     Uint32 type;        /**< ::SDL_MOUSEMOTION */
@@ -38,6 +59,7 @@ typedef struct SDL_MouseWheelEvent
     int x;              /**< The amount scrolled horizontally */
     int y;              /**< The amount scrolled vertically */
 } SDL_MouseWheelEvent;
+#endif /* 0 */
 
 typedef struct SDL_JoyAxisEvent
 {
@@ -93,6 +115,7 @@ typedef struct SDL_ControllerAxisEvent
     Uint32 type;        /**< ::SDL_CONTROLLERAXISMOTION */
     Uint32 timestamp;
     Uint8 which;        /**< The joystick instance id */
+    uint8_t pad1, pad2, pad3; // added padding to silence clang
     SDL_CONTROLLER_AXIS axis;         /**< The joystick axis index */
     int value;          /**< The axis value (range: -32768 to 32767) */
 } SDL_ControllerAxisEvent;
@@ -102,10 +125,12 @@ typedef struct SDL_ControllerButtonEvent
     Uint32 type;        /**< ::SDL_CONTROLLERBUTTONDOWN or ::SDL_CONTROLLERBUTTONUP */
     Uint32 timestamp;
     Uint8 which;        /**< The joystick instance id */
+    uint8_t pad1, pad2, pad3; // added padding to silence clang
     SDL_CONTROLLER_BUTTON button;       /**< The joystick button index */
     Uint8 state;        /**< ::SDL_PRESSED or ::SDL_RELEASED */
 } SDL_ControllerButtonEvent;
 
+#if 0 // unused
 typedef struct SDL_ControllerDeviceEvent
 {
         Uint32 type;        /**< ::SDL_CONTROLLERDEVICEADDED or ::SDL_CONTROLLERDEVICEREMOVED */
@@ -174,3 +199,4 @@ typedef struct SDL_TouchButtonEvent
     Uint8 padding1;
     Uint8 padding2;
 } SDL_TouchButtonEvent;
+#endif /* 0 */

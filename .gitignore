@@ -1,4 +1,5 @@
 *.o
 *.so
+dont_starve
 build/
 CMakeCache.txt

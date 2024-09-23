@@ -1,8 +1,9 @@
-ABI:
+ABI notes:
 
 good: SDL_AudioCVT has same size before and after packing on 32-bit (only)
-bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and need reorganizing
+bad: most of SDL_*Event have different sizes/layouts and need reorganizing
 
+(fixed)
 ```
 @@ -196,14 +220,12 @@ typedef struct SDL_MouseMotionEvent
      Uint32 type;        /**< ::SDL_MOUSEMOTION */
@@ -24,6 +25,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Sint32 yrel;        /**< The relative motion in the Y direction */
 ```
 
+(fixed)
 ```
 @@ -214,12 +236,13 @@ typedef struct SDL_MouseButtonEvent
      Uint32 type;        /**< ::SDL_MOUSEBUTTONDOWN or ::SDL_MOUSEBUTTONUP */
@@ -40,6 +42,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Sint32 y;           /**< Y coordinate, relative to window */
 ```
 
+(fixed, untested)
 ```
 @@ -230,8 +253,9 @@ typedef struct SDL_MouseWheelEvent
      Uint32 type;        /**< ::SDL_MOUSEWHEEL */
@@ -52,6 +55,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Sint32 y;           /**< The amount scrolled vertically */
 ```
 
+(fixed, untested)
 ```
 @@ -241,11 +265,13 @@ typedef struct SDL_JoyAxisEvent
  {
@@ -68,6 +72,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Uint16 padding4;
 ```
 
+(fixed, untested)
 ```
 @@ -255,12 +281,13 @@ typedef struct SDL_JoyBallEvent
  {
@@ -85,6 +90,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Sint16 yrel;        /**< The relative motion in the Y direction */
 ```
 
+(fixed, untested)
 ```
 @@ -270,7 +297,7 @@ typedef struct SDL_JoyHatEvent
  {
@@ -102,6 +108,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Uint8 padding2;
 ```
 
+(fixed, untested)
 ```
 @@ -289,10 +317,11 @@ typedef struct SDL_JoyButtonEvent
  {
@@ -115,6 +122,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Uint8 padding2;
 ```
 
+(fixed, untested)
 ```
 @@ -313,9 +342,13 @@ typedef struct SDL_ControllerAxisEvent
  {
@@ -132,6 +140,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Uint16 padding4;
 ```
 
+(fixed, untested)
 ```
 @@ -326,9 +359,11 @@ typedef struct SDL_ControllerButtonEvent
  {
@@ -146,6 +155,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Uint8 padding2;
 ```
 
+(no fix needed)
 ```
 @@ -337,51 +372,29 @@ typedef struct SDL_ControllerButtonEvent
   */
@@ -158,6 +168,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    Sint32 which;       /**< The joystick device index for the ADDED event, instance id for the REMOVED or REMAPPED event */
 ```
 
+(not fixed, probably unused)
 ```
  } SDL_ControllerDeviceEvent;
  
@@ -191,6 +202,7 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 +    float pressure;     /**< Normalized in the range 0...1 */
 ```
 
+(not fixed, probably unused)
 ```
 @@ -389,31 +402,29 @@ typedef struct SDL_MultiGestureEvent
  {
@@ -232,6 +244,8 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 ```
 
 
+(not fixed, probably unused)
+(would be too hard to do anyway)
 ```
 -/**
 - *  \brief Touch finger motion/finger event structure (event.tbutton.*)
@@ -248,4 +262,3 @@ bad: SDL_MouseMotionEvent, Button, and Wheel are different sizes/layouts and nee
 -    Uint8 padding2;
 -} SDL_TouchButtonEvent;
 ```
-k

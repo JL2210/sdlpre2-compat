@@ -1,7 +1,10 @@
+# Copyright (c) 2024 James R Larrowe
+# SPDX-License-Identifier: Zlib
+
 cmake_minimum_required(VERSION 3.6)
 project(sdlpre2-compat)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 23)
 set(FIND_LIBRARY_USE_LIB32_PATHS ON)
 
 add_compile_options(-m32 -pedantic
