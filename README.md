@@ -57,22 +57,22 @@ discover what seems like [a bug in SDL](https://github.com/libsdl-org/SDL/issues
 and I had to abandon that approach in favor of a (slightly jankier) solution
 using `la_symbind`.
 
-More details about the specific layout changes can be found in [NOTES.txt].
+More details about the specific layout changes can be found in [`NOTES.txt`](NOTES.txt).
 
 Symbols that I determined were potentially affected by ABI changes are listed
-in [problematic-syms-list.txt]. This list was created with
+in [`problematic-syms-list.txt`](problematic-syms-list.txt). This list was created with
 `objdump -T ~/.local/share/Steam/steamapps/common/dont_starve/bin/dontstarve_steam`
 and whittled down by hand by comparing the list against the changes in
 `include/` from `4149992..release-2.0.0` (again in SDL-historical-archive).
 
-[audit.c] is the main source of the auditing library and does the work to
+[`audit.c`](audit.c) is the main source of the auditing library and does the work to
 ignore the rpath for `libSDL2-2.0.so.0` and redirect `SDL_PollEvent` to
-[event-converter.c].
+[`event-converter.c`](event-converter.c).
 
-[event-converter.c] does some macro magic and `memmove`ing to make the new
+[`event-converter.c`](event-converter.c) does some macro magic and `memmove`ing to make the new
 events look like the old ones. The macros are a bit confusing but they do what they
 say.
 
 This project is licensed under the [Zlib license](LICENSE.txt), the same as SDL2.
-The structures in [`upstream.h`] are taken almost verbatim from SDL2 at the first
+The structures in [`upstream.h`](upstream.h) are taken almost verbatim from SDL2 at the first
 commit mentioned above, and any modifications made are probably not copyrightable.
