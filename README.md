@@ -5,7 +5,8 @@ This wrapper uses the `LD_AUDIT` interface to allow the games Don't Starve and
 Don't Starve Together to run with modern versions of SDL2. They both ship with
 a pre-2.0.0 release of SDL2 (somewhere in [[`4149992`](https://github.com/libsdl-org/SDL-historical-archive/commit/4149992ac26e739dd843f78a5a7bbe2dc5bcca71),
 [`d151ba0`](https://github.com/libsdl-org/SDL-historical-archive/commit/d151ba09266de92d2a4f631c86441d637f853e9e))).
-They are built for the 32-bit x86 architecture on Linux.
+They are both built for the 32-bit x86 architecture on Linux. Don't Starve
+Together has a 64-bit x86 build in addition to the 32-bit one.
 
 To build (release build heavily recommended for playable experience):
 
@@ -14,14 +15,24 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-To use, put this in your Steam launch arguments:
+To use on Don't Starve or Don't Starve Together (32 Bit), put this in your
+Steam launch arguments:
 
 ```
-LD_AUDIT=/path/to/sdlpre2-compat/build/ds_sdl2_shim.so %command%
+LD_AUDIT=/path/to/sdlpre2-compat/build/ds_sdl2_shim32.so %command%
+```
+
+For Don't Starve Together (64 Bit, the default), use this instead:
+
+```
+LD_AUDIT=/path/to/sdlpre2-compat/build/ds_sdl2_shim64.so %command%
 ```
 
 Now you can add other arguments, e.g. `SDL_VIDEODRIVER=wayland` or
 `SDL_AUDIODRIVER=pipewire`.
+
+For packagers, use the cmake flag `-DNO_BUILD_MULTILIB` and compile with
+either `-m32` or no extra flags.
 
 There are several issues mainly relating to event struct layout changes before
 2.0.0's release. I have [a different repo](https://github.com/JL2210/dont-starve-sdl2)

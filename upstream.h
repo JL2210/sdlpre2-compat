@@ -59,7 +59,7 @@ typedef struct SDL_MouseWheelEvent
     int x;              /**< The amount scrolled horizontally */
     int y;              /**< The amount scrolled vertically */
 } SDL_MouseWheelEvent;
-#endif /* 0 */
+#endif // 0
 
 typedef struct SDL_JoyAxisEvent
 {
@@ -115,7 +115,6 @@ typedef struct SDL_ControllerAxisEvent
     Uint32 type;        /**< ::SDL_CONTROLLERAXISMOTION */
     Uint32 timestamp;
     Uint8 which;        /**< The joystick instance id */
-    uint8_t pad1, pad2, pad3; // added padding to silence clang
     SDL_CONTROLLER_AXIS axis;         /**< The joystick axis index */
     int value;          /**< The axis value (range: -32768 to 32767) */
 } SDL_ControllerAxisEvent;
@@ -125,7 +124,6 @@ typedef struct SDL_ControllerButtonEvent
     Uint32 type;        /**< ::SDL_CONTROLLERBUTTONDOWN or ::SDL_CONTROLLERBUTTONUP */
     Uint32 timestamp;
     Uint8 which;        /**< The joystick instance id */
-    uint8_t pad1, pad2, pad3; // added padding to silence clang
     SDL_CONTROLLER_BUTTON button;       /**< The joystick button index */
     Uint8 state;        /**< ::SDL_PRESSED or ::SDL_RELEASED */
 } SDL_ControllerButtonEvent;
@@ -199,4 +197,4 @@ typedef struct SDL_TouchButtonEvent
     Uint8 padding1;
     Uint8 padding2;
 } SDL_TouchButtonEvent;
-#endif /* 0 */
+#endif // 0

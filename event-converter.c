@@ -8,12 +8,21 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
-// NOTE: use memmove instead of memcpy!
+#define FORCE_INLINE inline __attribute__((always_inline))
+static FORCE_INLINE void Event2toPre2(const SDL_Event *, SDL_Event *);
+
+#if __STDC_VERSION__ <= 201710L && defined(__GNUC__)
+# define typeof __typeof__
+#endif
+
+// NOTE: use memmove instead of memcpy unless it is guaranteed that the
+//       memory is not overlapping
 
 #define remove_member(remove, event, _event) \
-	_Static_assert(__builtin_types_compatible_p(typeof(event), SDL_Event *), "event must be of type SDL_Event*"); \
-	assert(event == (SDL_Event *)_event && "event and _event must be equal"); \
+	static_assert(__builtin_types_compatible_p(typeof(event), SDL_Event *), "'event' must be of type 'SDL_Event *'"); \
+	assert(event == (SDL_Event *)_event && "'_event' must be a union member of 'event'"); \
 	memmove(&_event->remove, &_event->remove+1, (char *)(event+1)-(char *)(&_event->remove+1))
 
 // automatically set up _event
@@ -21,10 +30,9 @@
 	SDL_##type##Event *_event = (typeof(_event))event; \
 	remove_member(remove, event, _event)
 
-// assumes little-endian (this is x86 anyway so point is moot)
 #define truncate_member(type, member, event, _event) \
-	_Static_assert(__builtin_types_compatible_p(typeof(event), SDL_Event *), "event must be of type SDL_Event*"); \
-	assert(event == (SDL_Event *)_event && "event and _event must be equal"); \
+	static_assert(__builtin_types_compatible_p(typeof(event), SDL_Event *), "'event' must be of type 'SDL_Event *'"); \
+	assert(event == (SDL_Event *)_event && "'_event' must be a union member of 'event'"); \
 	SDL_Old##type##Event *_oldevent = (typeof(_oldevent))event; \
 	_oldevent->member = (typeof(_oldevent->member))_event->member; \
 	memmove(&_oldevent->member+1, &_event->member+1, (char *)(event+1)-(char *)(&_event->member+1))
@@ -34,9 +42,18 @@
 	SDL_##type##Event *_event = (typeof(_event))event; \
 	truncate_member(type, member, event, _event)
 
-// modifies the event in-place
-int convert_sdl_event_to2(SDL_Event *event) {
+// SDL_PollEvent compatible abi
+int shim_SDL_PollEvent(SDL_Event *event) {
 	int retval = real_SDL_PollEvent(event);
+	Event2toPre2(event, event);
+	return retval;
+}
+
+// event2Pre and event2 are allowed to alias
+static FORCE_INLINE void Event2toPre2(const SDL_Event *event2, SDL_Event *event) {
+	if(event != event2) {
+		memmove(event, event2, sizeof(*event));
+	}
 	switch(event->type) {
 		case SDL_MOUSEMOTION: {
 			simple_remove_member(MouseMotion, which, event);
@@ -104,8 +121,7 @@ int convert_sdl_event_to2(SDL_Event *event) {
 		 * fields which I don't think I can reliably recreate with
 		 * the info that I'm provided, so I don't implement those.
 		 */
-		default: /* no changes, do nothing */
+		default:
 		break;
 	}
-	return retval;
 }

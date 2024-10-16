@@ -9,10 +9,14 @@
 #include <SDL_events.h>
 #include <SDL_gamecontroller.h>
 
+#define SDL2_SO_COOKIE		14084	// random number
+#define EXECUTABLE_COOKIE	48600	// ^^
+static_assert(SDL2_SO_COOKIE != EXECUTABLE_COOKIE, "sdl2 and executable cookies must be different!");
+
 typedef int SDL_PollEvent_t(SDL_Event *);
 
 extern SDL_PollEvent_t *real_SDL_PollEvent;
-extern SDL_PollEvent_t convert_sdl_event_to2;
+extern SDL_PollEvent_t shim_SDL_PollEvent;
 
 #if 0
 #define SDL_MouseMotionEvent		SDL_OldMouseMotionEvent
@@ -56,4 +60,4 @@ extern SDL_PollEvent_t convert_sdl_event_to2;
 #undef SDL_TouchButtonEvent
 #endif
 
-#endif /* _OLDEVENTS_H */
+#endif // _OLDEVENTS_H

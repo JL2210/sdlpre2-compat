@@ -3,36 +3,36 @@
  * SPDX-License-Identifier: Zlib
  */
 
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE
+#include "oldevents.h"	// SDL_PollEvent_t, real_SDL_PollEvent
+#include <assert.h>	// static assert, assert
+#include <inttypes.h>	// PRI/X/N printf macros
+#include <link.h>	// la_*
+#include <stdio.h>	// fprintf, stderr
+#include <string.h>	// GNU basename()
+
+#if __ELF_NATIVE_CLASS == 32
+# define la_symbind la_symbind32
+#elif __ELF_NATIVE_CLASS == 64
+# define la_symbind la_symbind64
+#else // ???
+# error __ELF_NATIVE_CLASS must be 32 or 64
 #endif
-#include "oldevents.h"
-#include <assert.h>
-#include <dlfcn.h>
-#include <inttypes.h>
-#include <link.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#define SDL2_SO_NAME		"libSDL2-2.0.so.0"
-#define POLLEVENT_SYMNAME	"SDL_PollEvent"
-#define SDL2_SO_COOKIE		14084	// random number
-#define EXECUTABLE_COOKIE	48600	// ^^
-_Static_assert(SDL2_SO_COOKIE != EXECUTABLE_COOKIE, "sdl2 and executable cookies must be different!");
-
-SDL_PollEvent_t *real_SDL_PollEvent = NULL;
-
+// NB: Don't depend on this having side effects
 #ifndef NDEBUG
 # define fprintd(stream, ...) fprintf(stream, __VA_ARGS__)
 #else
 # define fprintd(stream, ...)
 #endif
 
+#define SDL2_SO_NAME		"libSDL2-2.0.so.0"
+#define POLLEVENT_SYMNAME	"SDL_PollEvent"
+static_assert(SDL2_SO_COOKIE != EXECUTABLE_COOKIE, "sdl2 and executable cookies must be different!");
+
 unsigned int la_version(unsigned int version) {
 	(void)version;
-	_Static_assert(LAV_CURRENT == 2); // LAV_CURRENT guarantees abi compat, not api compat
+	// LAV_CURRENT guarantees abi compat, not api compat
+	static_assert(LAV_CURRENT == 2, "Code intended to be used with LA_AUDIT version 2");
 	fprintd(stderr, "la_version %u\n", version);
 	return LAV_CURRENT;
 }
@@ -63,9 +63,9 @@ unsigned int la_objopen(struct link_map *map, Lmid_t lmid,
 			uintptr_t *cookie) {
 	fprintd(stderr, "objopen %s\n", map->l_name);
 	if(*map->l_name == '\0') {
-		// l_name is the empty string if this is the main executable
+		// l_name is the empty string, so this is the main executable
 		*cookie = EXECUTABLE_COOKIE;
-		fprintd(stderr, "base executable\n");
+		fprintd(stderr, "main executable\n");
 		return LA_FLG_BINDFROM;
 	}
 
@@ -81,28 +81,22 @@ unsigned int la_objopen(struct link_map *map, Lmid_t lmid,
 /*
  * this function:
  * 1. stores a copy of the original SDL_PollEvent
- * 2. redirects the main executable's calls from (the real) SDL_PollEvent to convert_sdl_event_to2
+ * 2. redirects the main executable's calls of SDL_PollEvent to shim_SDL_PollEvent
  * 3. allows all calls outside of the main executable to go to the real SDL_PollEvent
- * intended to be error-hardy for use in e.g. other games
- * and doesn't break stuff that doesn't use SDL
+ * should be error-hardy for use in other games
+ * doesn't break stuff that doesn't use SDL
  * maybe not thread-safe? Eh.
  */
-uintptr_t la_symbind32(Elf32_Sym *sym, unsigned int ndx,
-                       uintptr_t *refcook, uintptr_t *defcook,
-                       unsigned int *flags, const char *symname) {
-	uintptr_t retval = sym->st_value;
-	int return_real = 0;
+SDL_PollEvent_t *real_SDL_PollEvent = NULL; // used by EventPre2to2
+uintptr_t la_symbind(ElfW(Sym) *sym, unsigned int ndx,
+                     uintptr_t *refcook, uintptr_t *defcook,
+                     unsigned int *flags, const char *symname) {
 	(void)ndx;
 
 	*flags |= LA_SYMB_NOPLTENTER | LA_SYMB_NOPLTEXIT;
 
 	if(*defcook != SDL2_SO_COOKIE) {
-		return retval;
-	}
-
-	if(*refcook != EXECUTABLE_COOKIE) {
-		fprintd(stderr, "not main program, returning real symbol\n");
-		return_real = 1;
+		return sym->st_value;
 	}
 
 	fprintd(stderr, "found sdl2 symbol %s\n", symname);
@@ -115,41 +109,14 @@ uintptr_t la_symbind32(Elf32_Sym *sym, unsigned int ndx,
 			real_SDL_PollEvent = (SDL_PollEvent_t *)sym->st_value;
 		}
 
-		if(return_real) {
+		if(*refcook != EXECUTABLE_COOKIE) {
 			// return the real function for use inside sdl2 or our library
-			retval = (uintptr_t)real_SDL_PollEvent;
+			return (uintptr_t)real_SDL_PollEvent;
 		} else {
 			// otherwise shim it for the game
-			retval = (uintptr_t)convert_sdl_event_to2;
+			return (uintptr_t)shim_SDL_PollEvent;
 		}
 	}
 
-	return retval;
+	return sym->st_value;
 }
-
-#if 0
-/* This function, if present, causes the dynamic linker
- * to enable its profiling hooks. Currently, this causes
- * SDL to crash inside glibc. Don't want to spend the time
- * or effort required to debug this right now, so I take
- * a different approach above.
- */
-unsigned int la_i86_gnu_pltexit(Elf32_Sym *sym, unsigned int ndx,
-				uintptr_t *refcook, uintptr_t *defcook,
-				const La_i86_regs *inregs, La_i86_retval *outregs,
-				const char *symname) {
-	assert(*refcook != SDL2_SO_COOKIE &&
-	       *defcook == SDL2_SO_COOKIE &&
-	       strcmp(symname, pollevent_symname) == 0);
-	(void)sym;
-	(void)ndx;
-	(void)outregs;
-
-	fprintd(stderr, "converting event...\n");
-	// XXX: outdated, convert_sdl_event_to2 calls SDL_PollEvent itself now
-	//      will probably crash if used
-	convert_sdl_event_to2((SDL_Event *)((void **)inregs->lr_esp)[1]);
-	fprintd(stderr, "done\n");
-	return outregs->lrv_eax; // this is ignored
-}
-#endif
